@@ -1,142 +1,157 @@
-# CarePoint Clinic Booking — Flask Frontend + API
+# CarePoint Clinic Booking System
 
-This package includes a responsive clinic appointment dashboard served by the existing Flask API. The UI supports publishing time slots, browsing availability, creating patient bookings, searching bookings by email, and cancelling slots/bookings.
+A simple and user-friendly clinic appointment booking website built with Python and Flask. It helps users check available appointment slots, book clinic visits, search existing bookings, and cancel appointments through a clean web interface.
 
-## Run the website on Windows
+## Features
 
-1. Extract the ZIP file.
-2. Open Command Prompt or PowerShell in the `clinic-booking-api` folder (the folder containing `run.py`).
-3. Run `py -m pip install -r requirements.txt`
-4. Run `py run.py`
-5. Open `http://127.0.0.1:5000` in your browser.
+- **View Appointment Slots** — Check available clinic appointment slots.
+- **Book Appointments** — Create a booking using the available slots.
+- **Search Bookings** — Find existing bookings using the available search options.
+- **Cancel Appointments** — Cancel an existing appointment.
+- **Responsive Interface** — Use the website on desktop and mobile devices.
+- **REST API** — Access booking and slot functionality through Flask API endpoints.
+- **Database Integration** — Store appointment and booking information using SQLite.
 
-The app uses SQLite and creates its database tables automatically. Keep `run.py` running while using the website. This is a local development setup; use a production WSGI server and configure security before public deployment.
+## Technologies Used
 
-## Frontend features
+- Python
+- Flask
+- SQLite
+- HTML5
+- CSS3
+- JavaScript
+- Git and GitHub
+- Gunicorn for production hosting
 
-- Responsive dashboard with live slot and booking counts
-- Create clinic time slots
-- Filter slots by clinic ID and availability
-- Book available appointments
-- Search bookings by patient email
-- Cancel appointments or time slots
-- API validation/conflict messages shown in the UI
+## Project Structure
 
+```text
+clinic-booking-api/
+├── app/
+│   ├── templates/
+│   │   └── index.html
+│   ├── static/
+│   │   ├── style.css
+│   │   └── app.js
+│   ├── routes.py
+│   ├── services.py
+│   ├── db.py
+│   ├── validation.py
+│   └── errors.py
+├── tests/
+├── run.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
+*Note: The structure above is illustrative. Keep the actual filenames and folders from your project.*
 
-A small Flask + SQLite API where clinics publish time slots and patients book them.
-A slot can **never** be double-booked, even when two requests arrive at the same moment.
+## Getting Started
 
-## Setup
+### 1. Clone the Repository
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+git clone https://github.com/sumitkumar2004/carepoint-clinic-booking.git
+cd carepoint-clinic-booking
+```
+
+### 2. Create a Virtual Environment
+
+On Windows:
+
+```powershell
+py -m venv venv
+```
+
+Activate it:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation, you can run the following command in Command Prompt instead:
+
+```cmd
+venv\Scripts\activate.bat
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-python run.py            # serves on http://127.0.0.1:5000
-pytest -q                # run the tests
 ```
 
-The database file defaults to `clinic.db`; override with `DATABASE=/path/to/file.db`.
-Tables are created automatically on startup.
-
-## How double-booking is prevented
-
-Two independent layers:
-
-1. **Serialised writes.** Every state-changing operation runs inside SQLite's
-   `BEGIN IMMEDIATE`, which takes the write lock up front. Two concurrent
-   "check slot is free, then insert booking" sequences cannot interleave.
-2. **Database constraint as a backstop.** A partial unique index
-   (`bookings(slot_id) WHERE status = 'booked'`) means the database itself rejects a second
-   active booking for the same slot, even if application code were wrong. Cancelled bookings
-   are excluded from the index, so a freed slot can be rebooked.
-
-`tests/test_booking_rules.py` fires 25 simultaneous booking requests at one slot and asserts
-exactly one `201` and 24 `409`s, and separately proves the DB constraint works when the
-service layer is bypassed.
-
-## Project layout
-
-```
-app/
-  __init__.py     app factory
-  routes.py       HTTP layer: parsing, status codes, error handlers
-  services.py     business rules and transactions (no Flask imports)
-  validation.py   input validation and parsing
-  db.py           schema and connection handling
-  errors.py       AppError type -> consistent JSON errors
-tests/            pytest suite (injectable clock, file-backed temp DB)
-run.py            entry point
-```
-
-## Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| POST | `/slots` | Create a slot |
-| GET | `/slots` | List slots (filters below) |
-| GET | `/slots/<id>` | Get one slot |
-| DELETE | `/slots/<id>` | Cancel a slot (also cancels its active booking) |
-| POST | `/bookings` | Book a slot |
-| GET | `/bookings` | List bookings (`patient_email`, `slot_id`, `status`) |
-| GET | `/bookings/<id>` | Get one booking |
-| DELETE | `/bookings/<id>` | Cancel a booking (frees the slot) |
-| GET | `/health` | Liveness check |
-
-List endpoints accept `limit` (1-200, default 50) and `offset`.
-`GET /slots` filters: `clinic_id`, `available=true|false`, `from`, `to` (ISO timestamps).
-
-Slot `state` is one of `available`, `booked`, `cancelled`.
-
-## Rules
-
-- Timestamps are ISO-8601 **with a timezone** (or `Z`); stored and returned in UTC.
-- Slot start must be in the future, end after start, max 12 hours.
-- Slots for the same clinic cannot overlap (`409 slot_overlap`).
-- Cannot book a slot that is already booked, cancelled, or already started.
-- Cancelling is a soft delete: records are kept with `cancelled_at`.
-
-## Example requests
+### 4. Run the Application
 
 ```bash
-# Clinic publishes a slot
-curl -X POST localhost:5000/slots -H 'Content-Type: application/json' -d '{
-  "clinic_id": "clinic-42",
-  "start_time": "2026-11-02T09:00:00+05:30",
-  "end_time": "2026-11-02T09:30:00+05:30"}'
-
-# List open slots for a clinic
-curl 'localhost:5000/slots?clinic_id=clinic-42&available=true'
-
-# Patient books it
-curl -X POST localhost:5000/bookings -H 'Content-Type: application/json' -d '{
-  "slot_id": 1, "patient_name": "Asha Rao", "patient_email": "asha@example.com"}'
-
-# Cancel the booking
-curl -X DELETE localhost:5000/bookings/1
+py run.py
 ```
 
-## Errors
+Open your browser and visit:
 
-All errors share one shape:
+http://127.0.0.1:5000
 
-```json
-{"error": {"code": "validation_error",
-           "message": "Request validation failed.",
-           "details": {"end_time": "end_time must be after start_time."}}}
-```
+## API Endpoints
 
-| Status | Codes |
+The application provides endpoints for working with appointment slots and bookings. The exact endpoints depend on the implementation.
+
+Examples of endpoints used by the project:
+
+| Endpoint | Purpose |
 |---|---|
-| 400 | `validation_error` (per-field `details`) |
-| 404 | `not_found` |
-| 405 | `method_not_allowed` |
-| 409 | `slot_already_booked`, `slot_cancelled`, `slot_in_past`, `slot_overlap`, `slot_already_cancelled`, `booking_already_cancelled` |
+| `/` | Open the clinic booking website |
+| `/api` | View API information |
+| `/slots?limit=200` | Retrieve appointment slots |
+| `/bookings?limit=100` | Retrieve bookings |
 
-## Design notes / trade-offs
+Use the appropriate HTTP methods and request fields defined in the application for creating or cancelling appointments.
 
-- SQLite allows one writer at a time, which makes the concurrency guarantee simple and
-  strong. For Postgres, the same partial unique index works unchanged; use
-  `SELECT ... FOR UPDATE` on the slot row in place of `BEGIN IMMEDIATE`.
-- No authentication: clinic vs patient roles are out of scope for this exercise.
-- Time is injected via `app.config["CLOCK"]` so tests are deterministic.
+## Running Tests
+
+If the project includes pytest tests, run:
+
+```bash
+pytest
+```
+
+## Deployment
+
+The application can be deployed as a Python web service using Render.
+
+**Build Command**
+
+```bash
+pip install -r requirements.txt
+```
+
+**Start Command**
+
+```bash
+gunicorn run:app
+```
+
+Make sure `run.py` exposes the Flask application as `app`. Configure the correct root directory in Render if the application files are inside a subfolder.
+
+## Future Improvements
+
+- User registration and login
+- Appointment reminders
+- Doctor and patient dashboards
+- Appointment status tracking
+- Improved booking validation
+- Integration with a persistent production database
+
+## Security Note
+
+This project is intended for learning and demonstration purposes. Before using it in a real clinic, add appropriate authentication, access controls, input validation, secure handling of patient information, and reliable database backups. Do not upload real patient records, passwords, or secret keys to a public repository.
+
+## Author
+
+**Sumit Kumar**
+
+GitHub: [@sumitkumar2004](https://github.com/sumitkumar2004)
+
+## License
+
+No license has been specified yet. Add a license file if you want to define how others may use, modify, or distribute this project.
