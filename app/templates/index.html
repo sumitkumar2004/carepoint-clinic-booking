@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint · Clinic Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#"><span class="brand-mark">✚</span><span>CarePoint<small>CLINIC MANAGEMENT</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <button class="nav-item active" data-view="overview"><span>▦</span> Overview</button>
+    <button class="nav-item" data-view="appointments"><span>▤</span> Appointments</button>
+    <button class="nav-item" data-view="bookings"><span>♧</span> Patient bookings</button>
+    <div class="sidebar-bottom"><div class="help-icon">?</div><div><strong>Need help?</strong><small>Manage your clinic with ease.</small></div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb">Workspace <span>/</span> <b id="crumb-title">Overview</b></div><div class="top-actions"><span class="status-dot"></span><span class="live-label">API connected</span><div class="avatar">CP</div></div></header>
+    <section class="welcome"><div><div class="eyebrow">MONDAY · YOUR CLINIC AT A GLANCE</div><h1 id="page-title">Good day, CarePoint <span>✦</span></h1><p>Manage appointments and help patients get the care they need.</p></div><button class="primary-btn" id="open-slot">＋ Create time slot</button></section>
+    <div id="toast" class="toast" role="status"></div>
+    <section class="stats">
+      <article class="stat-card"><div class="stat-top"><span>All time slots</span><span class="stat-icon blue">▦</span></div><div class="stat-value" id="stat-total">—</div><div class="stat-note">Published in the system</div></article>
+      <article class="stat-card"><div class="stat-top"><span>Available slots</span><span class="stat-icon green">✓</span></div><div class="stat-value" id="stat-available">—</div><div class="stat-note"><span class="green-text">Ready to book</span></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Booked appointments</span><span class="stat-icon purple">♧</span></div><div class="stat-value" id="stat-booked">—</div><div class="stat-note">Active patient bookings</div></article>
+      <article class="stat-card"><div class="stat-top"><span>Cancelled</span><span class="stat-icon amber">↺</span></div><div class="stat-value" id="stat-cancelled">—</div><div class="stat-note">Slots or bookings cancelled</div></article>
+    </section>
+    <section class="content-grid">
+      <article class="panel appointments-panel">
+        <div class="panel-heading"><div><h2 id="list-heading">Upcoming time slots</h2><p>Browse availability and manage patient appointments.</p></div><button class="text-btn" id="refresh">↻ Refresh</button></div>
+        <div class="toolbar"><div class="search-box"><span>⌕</span><input id="clinic-filter" placeholder="Filter by clinic ID"></div><select id="availability-filter"><option value="all">All time slots</option><option value="true">Available only</option><option value="false">Unavailable</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>CLINIC / SLOT</th><th>DATE & TIME</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="slots-body"><tr><td colspan="4" class="empty">Loading time slots…</td></tr></tbody></table></div>
+        <div class="table-footer"><span id="slot-count">Loading…</span><span>Live data from Clinic Booking API</span></div>
+      </article>
+      <aside class="panel side-panel">
+        <div class="panel-heading"><div><h2>Quick booking</h2><p>Reserve an available appointment.</p></div><span class="mini-icon">＋</span></div>
+        <form id="booking-form" class="form-stack">
+          <label>Available time slot<select id="booking-slot" required><option value="">Choose a slot</option></select></label>
+          <label>Patient full name<input id="patient-name" placeholder="e.g. Asha Rao" required maxlength="120"></label>
+          <label>Patient email<input id="patient-email" type="email" placeholder="asha@example.com" required maxlength="254"></label>
+          <button class="primary-btn full" type="submit">Confirm appointment <span>→</span></button>
+          <p class="form-foot">A slot can only be booked once. Booking is confirmed by the API.</p>
+        </form>
+        <div class="divider"></div>
+        <div class="panel-heading compact"><div><h2>Find a booking</h2><p>Search by patient email.</p></div></div>
+        <form id="find-form" class="find-form"><input id="find-email" type="email" placeholder="patient@email.com" required><button class="icon-btn" aria-label="Search bookings">⌕</button></form>
+        <div id="find-results" class="find-results"><span class="muted">Search to see booking history.</span></div>
+      </aside>
+    </section>
+    <section class="panel recent-panel" id="booking-section">
+      <div class="panel-heading"><div><h2>Recent patient bookings</h2><p>Review bookings and cancel when needed.</p></div><button class="text-btn" id="refresh-bookings">View latest ↗</button></div>
+      <div class="table-wrap"><table><thead><tr><th>BOOKING</th><th>PATIENT</th><th>EMAIL</th><th>SLOT</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="bookings-body"><tr><td colspan="6" class="empty">Loading bookings…</td></tr></tbody></table></div>
+    </section>
+    <footer>© 2026 CarePoint Clinic Booking <span>Built for simple, reliable appointment management.</span></footer>
+  </main>
+  <dialog id="slot-dialog">
+    <form id="slot-form" class="dialog-form">
+      <div class="dialog-head"><div><span class="eyebrow">SCHEDULE MANAGEMENT</span><h2>Create a time slot</h2><p>Publish a clinic appointment window for patients.</p></div><button type="button" class="close-btn" id="close-dialog">×</button></div>
+      <label>Clinic ID<input id="new-clinic" placeholder="e.g. clinic-42" required maxlength="100"></label>
+      <div class="two-cols"><label>Start date & time<input id="slot-start" type="datetime-local" required></label><label>End date & time<input id="slot-end" type="datetime-local" required></label></div>
+      <div class="dialog-actions"><button type="button" class="secondary-btn" id="cancel-dialog">Cancel</button><button type="submit" class="primary-btn">Publish time slot →</button></div>
+    </form>
+  </dialog>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
